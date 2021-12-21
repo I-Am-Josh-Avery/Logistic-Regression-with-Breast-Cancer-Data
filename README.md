@@ -16,18 +16,22 @@ McCoy Hall Rm 404, 601 University Drive, San Marcos Texas 78666
 ## Executive Summary
  We performed a logistic regression analysis of ten variables in the Breast Cancer Wisconsin Data Set (K.P. Bennet, 2016) hosted on Kaggle using the R language (Team, 2021). Based on information gathered from an article by Dr. Susan Klein on breast masses (Susan Klein, 2005) and additional guidance from Dr. Theodore Drell (Regulatory Affairs, Bayer AG), we reduced the scope to three types of variables: compactness, concavity, and texture (Drell, 2021). Utilizing the forward model building methodology, we determined that the count of concave points on a mass and the texture score are the best predictors of a malignant tumor. 
 ## Problem Description
- This paper explores breast cancer data gathered on Kaggle to predict whether breast masses are benign or malignant. Dr. William H. Wolberg, Nick Street, and Olvi L. Mangasarian of the University of Wisconsin created the dataset using fine needle aspirations (FNAs) (William H. Wolberg, 1995). This FNA procedure is performed by inserting a small needle into the suspected mass and drawing out a small sample and is sent off for evaluation under a microscope (Cytopathology: Fine Needle Aspiration (FNA), 2021). The dataset creators took the microscopic slides, created digitized images, and computed ten different features based on those images. The complete data set consisted of 569 observations of ten real-valued features calculated for each nucleus. 
+This paper explores breast cancer data gathered on Kaggle to predict whether breast masses are benign or malignant. Dr. William H. Wolberg, Nick Street, and Olvi L. Mangasarian of the University of Wisconsin created the dataset using fine needle aspirations (FNAs) (William H. Wolberg, 1995). This FNA procedure is performed by inserting a small needle into the suspected mass and drawing out a small sample and is sent off for evaluation under a microscope (Cytopathology: Fine Needle Aspiration (FNA), 2021). The dataset creators took the microscopic slides, created digitized images, and computed ten different features based on those images. The complete data set consisted of 569 observations of ten real-valued features calculated for each nucleus. 
 ## Data Exploration
- We used RStudio as our data analysis and visualization tool for this project. The libraries used were "tidyverse" (Hadley Wickham, 2019) and "InformationValue" (Prabhakaran, 2016). The raw data had 569 rows and 32 columns. Since the creators had already cleaned the data, the only change we made was assigning '1' to malignant tumors and '0' to benign tumors in the diagnosis column. The data is slightly unbalanced, as seen in Figure 1. There are 212 malignant observations and 357 benign observations, giving us a malignant-benign ratio of about 0.5939.
+We used RStudio as our data analysis and visualization tool for this project. The libraries used were "tidyverse" (Hadley Wickham, 2019) and "InformationValue" (Prabhakaran, 2016). The raw data had 569 rows and 32 columns. Since the creators had already cleaned the data, the only change we made was assigning '1' to malignant tumors and '0' to benign tumors in the diagnosis column. The data is slightly unbalanced, as seen in Figure 1. There are 212 malignant observations and 357 benign observations, giving us a malignant-benign ratio of about 0.5939.
+
+![Balance of the Data](/balance.png)
  
 Figure 1: Balance of the Diagnosis
 
-Given that we do not have experience in cytopathology, we consulted Dr. Theodore Drell, who performed his internship and pre-doctoral study in breast cancer research, to aid us in deciding which columns will provide us with the most information. After the consultation, we dropped twenty columns and used the remaining ten columns for computation. Dr. Drell suggested we investigate features related to compactness, concavity, and smoothness. Thus, we decided to explore smoothness_mean, texture_mean, and fractal_dimension_mean for measures of smoothness, concavity_mean and concave.points_mean for concavity, and compactness_mean for compactness. Additionally, there seemed to be a high correlation between the size descriptors (i.e., radius_mean, perimeter mean, and area_mean), so we added these variables to our analysis . 
+Given that we do not have experience in cytopathology, we consulted Dr. Theodore Drell, who performed his internship and pre-doctoral study in breast cancer research, to aid us in deciding which columns will provide us with the most information. After the consultation, we dropped twenty columns and used the remaining ten columns for computation. Dr. Drell suggested we investigate features related to compactness, concavity, and smoothness. Thus, we decided to explore smoothness_mean, texture_mean, and fractal_dimension_mean for measures of smoothness, concavity_mean and concave.points_mean for concavity, and compactness_mean for compactness. Additionally, there seemed to be a high correlation between the size descriptors (i.e., radius_mean, perimeter mean, and area_mean), so we added these variables to our analysis[^1]. 
+
+[^1]: See Appendix III: Data Dictionary for a description of each variable. 
 ## Analysis
 Since our dependent variable, diagnosis, is binary, we want to select a framework that will classify our diagnosis as benign (0) or malignant (1). Thus, the options for the analysis are taking a naive Bayes approach, using a decision tree, or performing logistic regression. We chose logistic regression to facilitate the model-building process.
 #### TRAINING
 To prepare for analysis, we created a 30-70 test-train split of the dataset (398 training observations and 171 test observations) and decided on a required significance level of alpha = 0.01. We began by analyzing each of the nine variables individually. We created models with single variables and found the best predictor under each category by comparing Akaike's Information Criteria (AIC) for the features if we found them to be significant (p < 0.01). The best single predictors for each category were concave.points_mean, texture_mean, compactness_mean, and perimeter_mean for the concavity, smoothness, compactness, and size categories, respectively. We then used these features for the rest of the analysis. 
-When creating models with two or more variables, one must consider the possibility of multicollinearity. We assumed that a correlation greater than 0.8 was grounds for multicollinearity for our purposes. Thus, we had to rule out two of the six possible two-variable models: concavity with compactness and concavity with perimeter . Additionally, this rules out using a three or four-variable model. Table 1 showcases the AIC scores for each of the remaining four possible models. We then selected the model with concavity and texture as our predictors since it scored the lowest AIC, even among the single-variable models. 
+When creating models with two or more variables, one must consider the possibility of multicollinearity. We assumed that a correlation greater than 0.8 was grounds for multicollinearity for our purposes. Thus, we had to rule out two of the six possible two-variable models: concavity with compactness and concavity with perimeter[^2]. Additionally, this rules out using a three or four-variable model. Table 1 showcases the AIC scores for each of the remaining four possible models. We then selected the model with concavity and texture as our predictors since it scored the lowest AIC, even among the single-variable models. 
 | Model	| AIC Score |
 | :---: | :---: |
 | concave.points_mean  + texture_mean	| 156.35 |
@@ -36,9 +40,13 @@ When creating models with two or more variables, one must consider the possibili
 | Compactness_mean + texture_mean	| 299.25 |
 
 Table 1: Two-Variable Models and AIC Scores
+
+[^2]: See Appendix II: Correlation Table on Training Data for correlations between these variables. 
 #### TESTING
 Now that we have obtained our best model, it is time to test it. First, we double-checked to make sure that each predictor in our model was still significant with the test data, and they were. Next, we examined the receiver operating characteristic (ROC) curve, pictured in Figure 1. The Area Under the ROC curve (AUROC) justifies the model's goodness-of-fit, which in this case was 0.9869. In other words, 98.69% of the time, the concavity-texture model will correctly assign a malignancy label to a tumor to a randomly selected tumor with higher levels of concave points and a higher texture score. 
- 
+
+![ROC Curve. AUROC: 0.9869](/roccurve.png)
+
 Figure 2: The Receiver Operating Characteristic Curve for the Selected Model
 
 Next, we computed some statistics about our model's prediction ability. Since this dataset is unbalanced, we found the optimal point to start assigning malignancy to observations using the InformationValue library. The cutoff is 0.560. Once we obtained this value, we created a confusion matrix (pictured in Table 2) to see how our model performed. Lastly, we calculated the sensitivity, specificity, accuracy, and precisions for malignant and benign tumors (Table 3).
@@ -288,10 +296,14 @@ sum((predicted==0 & diagnosis==0))/sum(predicted==0) 
  
 ## References
 Cytopathology: Fine Needle Aspiration (FNA). (2021).  AF Pathology Laboratories. Retrieved December 5 from https://pathlabs.ufl.edu/tests/test-directory-c/cytopathology-fine-needle-aspiration-fna/
+
 Drell, D. T. L. (2021). Variables which may correlate or inversely correlate to malignancy. In D. A. Stempnakowski (Ed.).
+
 Hadley Wickham, M. A., Jennifer Bryan, Winston Chang, Lucy D'Agostino McGowan, Romain François, Garrett Grolemund, Alex Hayes, Lionel Henry, Jim Hester, Max Kuhn, Thomas Lin Pedersen, Evan Miller, Stephan Milton Bache, Kirill Müller, Jeroen Ooms, David Robinson, Dana Paige Seidel, Vitalie Spinu, Kohske Takahashi, Davis Vaughan, Claus Wilke, Kara Woo, Hiroaki Yutani. (2019). Welcome to the tidyverse. Journal of Open Source Software, 4(43), 1686. https://doi.org/10.21105/joss.01686 
+
 K.P. Bennet, O. L. M. (2016). Breast Cancer Wisconsin (Diagnostic) Data Set UCI Machine Learning. https://www.kaggle.com/uciml/breast-cancer-wisconsin-data?select=data.csv 
 Prabhakaran, S. (2016). InformationValue: Performance Analysis and Companion Functions for Binary Classification Models. https://CRAN.R-project.org/package=InformationValue 
-Susan Klein, M. D. (2005). Evaluation of Palpable Breast Masses. American Family Physician, 71, 1731-1738. https://www.aafp.org/afp/2005/0501/p1731.html#:~:text=Malignant%20masses%20generally%20are%20hard,nonfixed%20masses%20can%20be%20cancerous. 
-William H. Wolberg, W. N. S., Olvi L. Mangasarian. (1995). Breast Cancer Wisconsin (Diagnostic) Data Set. https://archive.ics.uci.edu/ml/datasets/Breast+Cancer+Wisconsin+%28Diagnostic%29 
 
+Susan Klein, M. D. (2005). Evaluation of Palpable Breast Masses. American Family Physician, 71, 1731-1738. https://www.aafp.org/afp/2005/0501/p1731.html#:~:text=Malignant%20masses%20generally%20are%20hard,nonfixed%20masses%20can%20be%20cancerous. 
+
+William H. Wolberg, W. N. S., Olvi L. Mangasarian. (1995). Breast Cancer Wisconsin (Diagnostic) Data Set. https://archive.ics.uci.edu/ml/datasets/Breast+Cancer+Wisconsin+%28Diagnostic%29 
